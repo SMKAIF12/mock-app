@@ -1118,3 +1118,45 @@
   z-index: 2;
   background: #ffffff;
 }
+
+
+/* Bot Personality section — additive styles; existing rules preserved. */
+.app-shell.portal-theme .personality-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px;
+}
+.app-shell.portal-theme .personality-field {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  min-width: 0;
+}
+.app-shell.portal-theme .personality-field label {
+  color: #34445f;
+  font-size: 12px;
+  font-weight: 600;
+}
+.app-shell.portal-theme .personality-field select {
+  width: 100%;
+  min-height: 43px;
+  border: 1px solid #dce2eb;
+  border-radius: 9px;
+  padding: 10px 42px 10px 14px;
+  background-color: #fff;
+  color: #14243d;
+}
+.app-shell.portal-theme .personality-field select:hover:not(:disabled) { border-color: #f3a396; }
+.app-shell.portal-theme .personality-field select:focus-visible {
+  outline: none;
+  border-color: #f05742;
+  box-shadow: 0 0 0 3px rgba(240, 87, 66, .12);
+}
+.app-shell.portal-theme .personality-field small {
+  color: #7b899e;
+  font-size: 11px;
+  line-height: 1.5;
+}
+@media (max-width: 700px) {
+  .app-shell.portal-theme .personality-grid { grid-template-columns: 1fr; }
+}

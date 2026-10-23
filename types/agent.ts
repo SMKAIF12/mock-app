@@ -7,7 +7,16 @@ export type ExecutionStrategy =
   | "PARALLEL"
   | "ROUTER";
 
+export interface Personality {
+  formalityLevel?: string;
+  languageComplexity?: string;
+  responseLength?: string;
+  expressiveStyle?: string;
+  [key: string]: unknown;
+}
+
 export interface Agent {
+  botPersonality?: Personality;
   agentId: string;
   name: string;
   description: string;

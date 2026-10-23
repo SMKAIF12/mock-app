@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Agent, AgentType, ExecutionStrategy } from "@/types/agent";
+import type { Agent, AgentType, ExecutionStrategy, Personality } from "@/types/agent";
 import "@/components/AgentDashboard.light.css";
 import "@/components/AgentDashboard.table-update.css";
 
@@ -44,6 +44,11 @@ const availableSkills = [
   { id: "skill-research", name: "Research", description: "Research and synthesis workflows" }
 ];
 
+
+const FORMALITY_OPTIONS = [{ name: "Formal", value: "Formal" }, { name: "Semi Formal", value: "Semiformal" }, { name: "Neutral", value: "Neutral" }, { name: "Informal", value: "Informal" }];
+const COMPLEXITY_OPTIONS = [{ name: "Simple", value: "Simple" }, { name: "Moderate", value: "Moderate" }, { name: "Advanced", value: "Advanced" }, { name: "Technical", value: "Technical" }];
+const LENGTH_OPTIONS = [{ name: "Short (50-100 char)", value: "50-100" }, { name: "Medium (100-250 char)", value: "100-250" }, { name: "Long (250-750 char)", value: "250-750" }];
+const STYLE_OPTIONS = [{ name: "Professional", value: "Professional" }, { name: "Friendly", value: "Friendly" }, { name: "Empathetic", value: "Empathetic" }, { name: "Fun", value: "Fun" }];
 
 const initialAgents: Agent[] = [
   {
@@ -208,6 +213,7 @@ export default function AgentDashboard() {
         temperature: 0.2
       },
       systemPrompt: "",
+      botPersonality: {},
       tools: [],
       mcp: [],
       skills: [],
@@ -494,6 +500,7 @@ function ConfigurePanel({
     ] : []),
     { id: "model", label: "Model", description: "Model and deployment", complete: Boolean(draft.model?.provider && draft.model?.deploymentKey) },
     { id: "prompt", label: "System Prompt", description: "Agent instructions", complete: Boolean(draft.systemPrompt?.trim()) },
+    { id: "personality", label: "Personality", description: "Communication preferences", complete: Boolean(draft.botPersonality?.formalityLevel && draft.botPersonality?.languageComplexity && draft.botPersonality?.responseLength && draft.botPersonality?.expressiveStyle) },
     { id: "tools", label: "Tools", description: "Enabled tools", complete: Boolean(draft.tools?.some(item => item.enabled)) },
     { id: "mcp", label: "MCP", description: "MCP server tools", complete: Boolean(draft.mcp?.some(item => (item.allowedTools?.length ?? 0) > 0)) },
     { id: "skills", label: "Skills", description: "Assigned skills", complete: Boolean(draft.skills?.some(item => item.enabled)) },
@@ -652,6 +659,12 @@ function ConfigurePanel({
 
               {section === "model" && <ModelSection agent={draft} onChange={setDraft} />}
               {section === "prompt" && <div className="content-card"><div className="section-heading"><div><h2>System Prompt</h2><p>Instructions followed by this agent.</p></div></div><textarea className="catalog-textarea" rows={10} value={draft.systemPrompt} onChange={e => setDraft({ ...draft, systemPrompt: e.target.value })} placeholder="Enter system instructions..." /></div>}
+              {section === "personality" && (
+                <PersonalitySection
+                  value={draft.botPersonality ?? {}}
+                  onChange={(botPersonality) => setDraft(current => ({ ...current, botPersonality }))}
+                />
+              )}
               {section === "tools" && <CatalogMultiSelect title="Available Tools" description="Choose the tools this agent can use." items={availableTools} selected={draft.tools.filter(t => t.enabled).map(t => t.toolId)} onToggle={id => setDraft({ ...draft, tools: toggleIds(draft.tools.filter(t => t.enabled).map(t => t.toolId), id).map(toolId => ({ toolId, enabled: true })) })} />}
               {section === "mcp" && <McpSection agent={draft} onChange={setDraft} />}
               {section === "skills" && <CatalogMultiSelect title="Available Skills" description="Assign one or more skills to this agent." items={availableSkills} selected={draft.skills.filter(s => s.enabled).map(s => s.skillId)} onToggle={id => setDraft({ ...draft, skills: toggleIds(draft.skills.filter(s => s.enabled).map(s => s.skillId), id).map(skillId => ({ skillId, enabled: true })) })} />}
@@ -1062,6 +1075,32 @@ function McpSection({ agent, onChange }: { agent: Agent; onChange: (agent: Agent
       })}
     </div>
   </div>;
+}
+
+function PersonalitySection({ value, onChange }: { value: Personality; onChange: (value: Personality) => void }) {
+  const fields: { key: keyof Pick<Personality, "formalityLevel" | "languageComplexity" | "responseLength" | "expressiveStyle">; label: string; hint: string; options: { name: string; value: string }[] }[] = [
+    { key: "formalityLevel", label: "Formality Level", hint: "Choose how formal the agent should sound.", options: FORMALITY_OPTIONS },
+    { key: "languageComplexity", label: "Language Complexity", hint: "Set the level of technical detail in responses.", options: COMPLEXITY_OPTIONS },
+    { key: "responseLength", label: "Response Length", hint: "Choose the preferred response length.", options: LENGTH_OPTIONS },
+    { key: "expressiveStyle", label: "Expressive Style", hint: "Choose the agent's communication style.", options: STYLE_OPTIONS }
+  ];
+  return (
+    <div className="content-card personality-section">
+      <div className="section-heading"><div><h2>Personality</h2><p>Customize how your agent communicates with users. All settings are optional.</p></div></div>
+      <div className="personality-grid">
+        {fields.map(field => (
+          <div className="personality-field" key={field.key}>
+            <label htmlFor={`personality-${field.key}`}>{field.label}</label>
+            <select id={`personality-${field.key}`} value={value[field.key] ?? ""} onChange={event => onChange({ ...value, [field.key]: event.target.value || undefined })}>
+              <option value="">Select {field.label}</option>
+              {field.options.map(option => <option key={option.value} value={option.value}>{option.name}</option>)}
+            </select>
+            <small>{field.hint}</small>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function Placeholder({ title, text }: { title: string; text: string }) {
