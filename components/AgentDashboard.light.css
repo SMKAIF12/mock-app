@@ -978,3 +978,143 @@
   border-color: var(--agent-accent);
   background-color: #fff0ec;
 }
+
+
+/* =====================================================
+   Agents table — eight-column balanced alignment
+   Agent ID | Name | Type | Status | Scope | Created | Updated | Actions
+   Keep this block last to override legacy 7/9-column grids.
+   ===================================================== */
+.app-shell.portal-theme .agents-table-scroll .table-head,
+.app-shell.portal-theme .agents-table-scroll .table-row {
+  display: grid;
+  grid-template-columns:
+    minmax(130px, 1.25fr)
+    minmax(150px, 1.45fr)
+    minmax(82px, .7fr)
+    minmax(90px, .8fr)
+    minmax(90px, .8fr)
+    minmax(155px, 1.25fr)
+    minmax(155px, 1.25fr)
+    minmax(92px, .75fr) !important;
+  width: 100%;
+  min-width: 1060px;
+  gap: 14px;
+  padding: 0 20px;
+  align-items: center;
+  box-sizing: border-box;
+}
+.app-shell.portal-theme .agents-table-scroll .table-head {
+  min-height: 52px;
+  height: 52px;
+  background: #f8fafc;
+}
+.app-shell.portal-theme .agents-table-scroll .table-row {
+  min-height: 64px;
+  color: #14243d;
+  transition: background-color .18s ease;
+}
+.app-shell.portal-theme .agents-table-scroll .table-head > *,
+.app-shell.portal-theme .agents-table-scroll .table-row > * {
+  min-width: 0;
+}
+.app-shell.portal-theme .agents-table-scroll .agent-cell {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+}
+/* The listing shows just the agent name; icons belong in the page heading/sidebar. */
+.app-shell.portal-theme .agents-table-scroll .agent-cell .agent-icon {
+  display: none;
+}
+.app-shell.portal-theme .agents-table-scroll .agent-cell strong {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+}
+.app-shell.portal-theme .agents-table-scroll .agent-cell small {
+  display: none;
+}
+.app-shell.portal-theme .agents-table-scroll .agent-id-cell {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-shell.portal-theme .agents-table-scroll .date {
+  white-space: nowrap;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.app-shell.portal-theme .agents-table-scroll .status,
+.app-shell.portal-theme .agents-table-scroll .agent-row-actions {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+.app-shell.portal-theme .agents-table-scroll .agent-row-actions {
+  gap: 8px;
+  justify-content: flex-start;
+}
+.app-shell.portal-theme .agents-table-scroll .table-row:hover {
+  background: #fff8f6;
+}
+@media (max-width: 1100px) {
+  .app-shell.portal-theme .agents-table-scroll .table-head,
+  .app-shell.portal-theme .agents-table-scroll .table-row {
+    gap: 10px;
+    padding: 0 14px;
+  }
+}
+
+/* =========================================
+   Single scrollbar for Tools, MCP and Skills
+   ========================================= */
+
+/* Main wizard content wrapper */
+.app-shell.portal-theme .wizard-layout .wizard-content-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Disable outer content scrollbar */
+.app-shell.portal-theme .wizard-layout .config-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden !important;
+  padding: 24px 24px 12px;
+}
+
+/* Scroll only the available items list */
+.app-shell.portal-theme .wizard-layout .available-items-scroll {
+  height: auto;
+  max-height: min(360px, calc(100dvh - 390px));
+  min-height: 0;
+
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding: 4px 10px 20px 0;
+  scroll-padding-bottom: 20px;
+  box-sizing: border-box;
+}
+
+/* Keep the last item fully visible */
+.app-shell.portal-theme .wizard-layout
+.available-items-scroll > :last-child {
+  margin-bottom: 12px;
+}
+
+/* Footer stays fixed at the bottom */
+.app-shell.portal-theme .wizard-layout .config-footer {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+}

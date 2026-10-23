@@ -1,23 +1,30 @@
- "use client";
+"use client";
 
 import { useMemo, useState } from "react";
 import type { Agent, AgentType, ExecutionStrategy } from "@/types/agent";
 import "@/components/AgentDashboard.light.css";
+import "@/components/AgentDashboard.table-update.css";
 
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, BookOpen, Bot } from "lucide-react";
 // Replace these sample catalogs with API responses when integrating your backend.
 const availableModels = [
-  { id: "gpt-5.1", name: "GPT-5.1", provider: "azureOpenAi", deployments: [
-    { key: "dep-gpt-5-1", name: "GPT-5.1 · Default", region: "East US" },
-    { key: "dep-gpt-5.1-australiaeast", name: "GPT-5.1 · Australia East", region: "Australia East" }
-  ] },
-  { id: "gpt-4.1", name: "GPT-4.1", provider: "azureOpenAi", deployments: [
-    { key: "dep-gpt-4-1-eastus", name: "GPT-4.1 · East US", region: "East US" },
-    { key: "dep-gpt-4-1-swedencentral", name: "GPT-4.1 · Sweden Central", region: "Sweden Central" }
-  ] },
-  { id: "gpt-4o", name: "GPT-4o", provider: "azureOpenAi", deployments: [
-    { key: "dep-gpt-4o-eastus", name: "GPT-4o · East US", region: "East US" }
-  ] }
+  {
+    id: "gpt-5.1", name: "GPT-5.1", provider: "azureOpenAi", deployments: [
+      { key: "dep-gpt-5-1", name: "GPT-5.1 · Default", region: "East US" },
+      { key: "dep-gpt-5.1-australiaeast", name: "GPT-5.1 · Australia East", region: "Australia East" }
+    ]
+  },
+  {
+    id: "gpt-4.1", name: "GPT-4.1", provider: "azureOpenAi", deployments: [
+      { key: "dep-gpt-4-1-eastus", name: "GPT-4.1 · East US", region: "East US" },
+      { key: "dep-gpt-4-1-swedencentral", name: "GPT-4.1 · Sweden Central", region: "Sweden Central" }
+    ]
+  },
+  {
+    id: "gpt-4o", name: "GPT-4o", provider: "azureOpenAi", deployments: [
+      { key: "dep-gpt-4o-eastus", name: "GPT-4o · East US", region: "East US" }
+    ]
+  }
 ];
 const availableTools = [
   { id: "tool-product-search", name: "Product Search", description: "Find products and product information" },
@@ -40,7 +47,7 @@ const availableSkills = [
 
 const initialAgents: Agent[] = [
   {
-    agentId: "sales-agent",
+    agentId: "agent-abc1234",
     name: "Sales Agent",
     description: "Answers product questions and supports sales workflows.",
     type: "SINGLE",
@@ -69,7 +76,7 @@ const initialAgents: Agent[] = [
     updatedAt: "2026-10-13T09:00:00Z"
   },
   {
-    agentId: "support-agent",
+    agentId: "agent-def5678",
     name: "Support Agent",
     description: "Handles customer support queries and resolves issues.",
     type: "SINGLE",
@@ -90,7 +97,7 @@ const initialAgents: Agent[] = [
     updatedAt: "2026-10-12T16:32:00Z"
   },
   {
-    agentId: "research-agent",
+    agentId: "agent-ghi9012",
     name: "Research Agent",
     description: "Searches and summarizes information from knowledge sources.",
     type: "SINGLE",
@@ -127,26 +134,26 @@ const strategyInfo: {
   description: string;
   recommended?: boolean;
 }[] = [
-  {
-    value: "SEQUENTIAL",
-    title: "Sequential",
-    description:
-      "Agents run in order. Each agent's output can be passed to the next agent.",
-    recommended: true
-  },
-  {
-    value: "PARALLEL",
-    title: "Parallel",
-    description:
-      "All selected agents run simultaneously and their outputs are combined."
-  },
-  {
-    value: "ROUTER",
-    title: "Router",
-    description:
-      "A routing agent decides which agent should be invoked based on the task."
-  }
-];
+    {
+      value: "SEQUENTIAL",
+      title: "Sequential",
+      description:
+        "Agents run in order. Each agent's output can be passed to the next agent.",
+      recommended: true
+    },
+    {
+      value: "PARALLEL",
+      title: "Parallel",
+      description:
+        "All selected agents run simultaneously and their outputs are combined."
+    },
+    {
+      value: "ROUTER",
+      title: "Router",
+      description:
+        "A routing agent decides which agent should be invoked based on the task."
+    }
+  ];
 
 export default function AgentDashboard() {
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
@@ -186,7 +193,7 @@ export default function AgentDashboard() {
   );
 
   const createAgent = (name: string, description: string) => {
-    const now = new Date().toISOString();
+    const now = new Date().getDate().toString();
     const newAgent: Agent = {
       agentId: crypto.randomUUID(),
       name,
@@ -234,130 +241,123 @@ export default function AgentDashboard() {
     <div className="app-shell portal-theme">
       <PortalHeader />
       <div className="portal-layout">
-      <Sidebar />
-      <main className="main">
-        <div className="breadcrumbs"><span>Home</span><span>›</span><span>AI Services</span><span>›</span><strong>Agents</strong>{configuredAgent && <><span>›</span><strong>Configure</strong></>}</div>
-        <div className={`main-content ${configuredAgent ? "main-content--builder" : ""}`}>
-        {configuredAgent ? (
-          <ConfigurePanel
-            key={configuredAgent.agentId}
-            agent={configuredAgent}
-            allAgents={agents}
-            onClose={() => setConfigureId(null)}
-            onSave={updateAgent}
-          />
-        ) : (<>
-        <header className="topbar">
-          <div className="heading-icon">♙</div>
-          <div>
-            <h1>AI Agents</h1>
-            <p>Create and manage AI agents to automate your workflows.</p>
-          </div>
-
-        </header>
-
-        <section className="agents-toolbar-wrap">
-          <div className="toolbar agents-toolbar">
-            <div className="search"><span>⌕</span><input aria-label="Search agents" placeholder="Search agent name or ID..." value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-            <button type="button" className={`secondary-button agents-filter-toggle ${filtersOpen ? "is-open" : ""}`} aria-expanded={filtersOpen} aria-controls="agent-filter-options" onClick={() => setFiltersOpen(open => !open)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 7.5V19l-3 1v-7.5L4 5Z"/></svg>
-              Filters {([filterStatus, filterType, filterScope].filter(value => value !== "ALL").length > 0) && <span className="filter-count">{[filterStatus, filterType, filterScope].filter(value => value !== "ALL").length}</span>}
-            </button>
-            <button type="button" className={`secondary-button agents-sort-toggle ${sortOpen ? "is-open" : ""}`} aria-expanded={sortOpen} aria-controls="agent-sort-options" onClick={() => setSortOpen(open => !open)}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 7h13M4 12h9M4 17h5M17 14v7m0 0-3-3m3 3 3-3"/></svg>
-              Sort
-            </button>
-            <button type="button" className="secondary-button agents-refresh" title="Reset search and filters" aria-label="Reset search and filters" onClick={() => { setSearch(""); setFilterStatus("ALL"); setFilterType("ALL"); setFilterScope("ALL"); setSortBy("updatedAt"); setSortDirection("desc"); }}>↻</button>
-            <button type="button" className="primary-button agents-create" onClick={() => setCreateOpen(true)}>＋ Create Agent</button>
-          </div>
-          {sortOpen && <div id="agent-sort-options" className="agents-sort-panel">
-            <label>SORT BY<select aria-label="Sort agents by" value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
-              <option value="updatedAt">Updated At</option><option value="createdAt">Created At</option><option value="name">Agent Name</option><option value="agentId">Agent ID</option><option value="status">Status</option><option value="type">Type</option>
-            </select></label>
-            <label>ORDER<select aria-label="Sort direction" value={sortDirection} onChange={(e) => setSortDirection(e.target.value as "asc" | "desc")}>
-              <option value="desc">Descending (Z–A / Newest first)</option><option value="asc">Ascending (A–Z / Oldest first)</option>
-            </select></label>
-          </div>}
-          {filtersOpen && <div id="agent-filter-options" className="agents-filter-panel">
-            <label>STATUS<select aria-label="Filter by status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}><option value="ALL">All Statuses</option><option value="draft">Draft</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
-            <label>TYPE<select aria-label="Filter by type" value={filterType} onChange={(e) => setFilterType(e.target.value as "ALL" | AgentType)}><option value="ALL">All Types</option><option value="SINGLE">Single</option><option value="MULTI">Multiple</option></select></label>
-            <label>SCOPE<select aria-label="Filter by scope" value={filterScope} onChange={(e) => setFilterScope(e.target.value)}><option value="ALL">All Scopes</option><option value="platform">Platform</option><option value="client">Client</option></select></label>
-          </div>}
-        </section>
-
-        <section className="table-card">
-          <div className="agents-table-scroll" role="region" aria-label="Agents list" tabIndex={0}>
-          <div className="table-head">
-            <span>Name</span>
-            <span>Agent ID</span>
-            <span>Type</span>
-            <span>Version</span>
-            <span>Status</span>
-            <span>Scope</span>
-            <span>Created At</span>
-            <span>Updated At</span>
-            <span>Actions</span>
-          </div>
-
-          {filteredAgents.map((agent) => (
-            <div className="table-row" key={agent.agentId}>
-              <div className="agent-cell">
-                <div className="agent-icon">
-                  {agent.type === "MULTI" ? "♧" : "♙"}
-                </div>
+        <Sidebar />
+        <main className="main">
+          <div className="breadcrumbs"><span>Home</span><span>›</span><span>AI Services</span><span>›</span><strong>Agents</strong>{configuredAgent && <><span>›</span><strong>Configure</strong></>}</div>
+          <div className={`main-content ${configuredAgent ? "main-content--builder" : ""}`}>
+            {configuredAgent ? (
+              <ConfigurePanel
+                key={configuredAgent.agentId}
+                agent={configuredAgent}
+                allAgents={agents}
+                onClose={() => setConfigureId(null)}
+                onSave={updateAgent}
+              />
+            ) : (<>
+              <header className="topbar">
                 <div>
-                  <strong>{agent.name}</strong>
-                  <small>{agent.description}</small>
+                  <h1>AI Agents</h1>
+                  <p>Create and manage AI agents to automate your workflows.</p>
                 </div>
-              </div>
 
-              <span className="agent-id-cell" title={agent.agentId}>{agent.agentId}</span>
-              <span className="pill">{agent.type}</span>
-              <span>{agent.version.toFixed(1)}</span>
+              </header>
 
-              <span className="status">
-                <i className={agent.status} />
-                {agent.status === "draft" ? "Draft" : agent.status === "active" ? "Active" : "Inactive"}
-              </span>
+              <section className="agents-toolbar-wrap">
+                <div className="toolbar agents-toolbar">
+                  <div className="search"><span>⌕</span><input aria-label="Search agents" placeholder="Search agent name or ID..." value={search} onChange={(e) => setSearch(e.target.value)} /></div>
+                  <button type="button" className={`secondary-button agents-filter-toggle ${filtersOpen ? "is-open" : ""}`} aria-expanded={filtersOpen} aria-controls="agent-filter-options" onClick={() => setFiltersOpen(open => !open)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 5h16l-6.5 7.5V19l-3 1v-7.5L4 5Z" /></svg>
+                    Filters {([filterStatus, filterType, filterScope].filter(value => value !== "ALL").length > 0) && <span className="filter-count">{[filterStatus, filterType, filterScope].filter(value => value !== "ALL").length}</span>}
+                  </button>
+                  <button type="button" className={`secondary-button agents-sort-toggle ${sortOpen ? "is-open" : ""}`} aria-expanded={sortOpen} aria-controls="agent-sort-options" onClick={() => setSortOpen(open => !open)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="M4 7h13M4 12h9M4 17h5M17 14v7m0 0-3-3m3 3 3-3" /></svg>
+                    Sort
+                  </button>
+                  <button type="button" className="secondary-button agents-refresh" title="Reset search and filters" aria-label="Reset search and filters" onClick={() => { setSearch(""); setFilterStatus("ALL"); setFilterType("ALL"); setFilterScope("ALL"); setSortBy("updatedAt"); setSortDirection("desc"); }}>↻</button>
+                  <button type="button" className="primary-button agents-create" onClick={() => setCreateOpen(true)}>＋ Create Agent</button>
+                </div>
+                {sortOpen && <div id="agent-sort-options" className="agents-sort-panel">
+                  <label>SORT BY<select aria-label="Sort agents by" value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)}>
+                    <option value="updatedAt">Updated At</option><option value="createdAt">Created At</option><option value="name">Agent Name</option><option value="agentId">Agent ID</option><option value="status">Status</option><option value="type">Type</option>
+                  </select></label>
+                  <label>ORDER<select aria-label="Sort direction" value={sortDirection} onChange={(e) => setSortDirection(e.target.value as "asc" | "desc")}>
+                    <option value="desc">Descending (Z–A / Newest first)</option><option value="asc">Ascending (A–Z / Oldest first)</option>
+                  </select></label>
+                </div>}
+                {filtersOpen && <div id="agent-filter-options" className="agents-filter-panel">
+                  <label>STATUS<select aria-label="Filter by status" value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}><option value="ALL">All Statuses</option><option value="draft">Draft</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+                  <label>TYPE<select aria-label="Filter by type" value={filterType} onChange={(e) => setFilterType(e.target.value as "ALL" | AgentType)}><option value="ALL">All Types</option><option value="SINGLE">Single</option><option value="MULTI">Multiple</option></select></label>
+                  <label>SCOPE<select aria-label="Filter by scope" value={filterScope} onChange={(e) => setFilterScope(e.target.value)}><option value="ALL">All Scopes</option><option value="platform">Platform</option><option value="client">Client</option></select></label>
+                </div>}
+              </section>
 
-              <span>{capitalize(agent.scope.type)}</span>
+              <section className="table-card">
+                <div className="agents-table-scroll" role="region" aria-label="Agents list" tabIndex={0}>
 
-              <span className="date">{agent.createdAt ? formatDate(agent.createdAt) : "—"}</span>
-              <span className="date">
-                {formatDate(agent.updatedAt)}
-              </span>
+                  <div className="table-head">
+                    <span>AGENT ID</span>
+                    <span>NAME</span>
+                    <span>TYPE</span>
+                    <span>STATUS</span>
+                    <span>SCOPE</span>
+                    <span>CREATED AT</span>
+                    <span>UPDATED AT</span>
+                    <span>ACTIONS</span>
+                  </div>
 
-              <div className="agent-row-actions">
-                <button
-                  type="button"
-                  className="agent-action-icon"
-                  aria-label={`Configure ${agent.name}`}
-                  title="Configure"
-                  onClick={() => setConfigureId(agent.agentId)}
-                >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0 3 3l2-1 2 2-1 2a3 3 0 0 0 0 6l1 2-2 2-2-1a3 3 0 0 0-6 0l-2 1-2-2 1-2a3 3 0 0 0 0-6L5 7l2-2 2 1a3 3 0 0 0 3-3Z"/><circle cx="12" cy="12" r="3"/></svg>
-                </button>
-                <button
-                  type="button"
-                  className="agent-action-icon danger"
-                  aria-label={`Delete ${agent.name}`}
-                  title="Delete"
-                  onClick={() => setDeleteId(agent.agentId)}
-                >
-                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3"/></svg>
-                </button>
-              </div>
-            </div>
-          ))}
 
+                  {filteredAgents.map((agent) => (
+                    <div className="table-row" key={agent.agentId}>
+                      <span className="agent-id-cell" title={agent.agentId}>
+                        {agent.agentId}
+                      </span>
+
+                      <div className="agent-cell">
+                        <strong title={agent.name}>{agent.name}</strong>
+                      </div>
+
+                      <span className="pill">{agent.type}</span>
+
+                      <span className="status">
+                        <i className={agent.status} />
+                        {agent.status === "draft" ? "Draft" : agent.status === "active" ? "Active" : "Inactive"}
+                      </span>
+
+                      <span>{agent.scope?.type ? capitalize(agent.scope.type) : "—"}</span>
+                      <span className="date">{agent.createdAt ? formatDate(agent.createdAt) : "—"}</span>
+                      <span className="date">{agent.updatedAt ? formatDate(agent.updatedAt) : "—"}</span>
+
+                      <div className="agent-row-actions">
+                        <button
+                          type="button"
+                          className="agent-action-icon"
+                          aria-label={`Configure ${agent.name}`}
+                          title="Configure"
+                          onClick={() => setConfigureId(agent.agentId)}
+                        >
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 3a3 3 0 0 0 3 3l2-1 2 2-1 2a3 3 0 0 0 0 6l1 2-2 2-2-1a3 3 0 0 0-6 0l-2 1-2-2 1-2a3 3 0 0 0 0-6L5 7l2-2 2 1a3 3 0 0 0 3-3Z" /><circle cx="12" cy="12" r="3" /></svg>
+                        </button>
+                        <button
+                          type="button"
+                          className="agent-action-icon danger"
+                          aria-label={`Delete ${agent.name}`}
+                          title="Delete"
+                          onClick={() => setDeleteId(agent.agentId)}
+                        >
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" /></svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+
+                </div>
+                <div className="table-footer">
+                  Showing {filteredAgents.length} of {agents.length} agents
+                </div>
+              </section>
+            </>)}
           </div>
-          <div className="table-footer">
-            Showing {filteredAgents.length} of {agents.length} agents
-          </div>
-        </section>
-        </>)}
-        </div>
-      </main>
+        </main>
       </div>
 
       {agentToDelete && (
@@ -386,7 +386,7 @@ export default function AgentDashboard() {
 
 function PortalHeader() {
   return <header className="portal-header">
-    <div className="portal-brand"><div className="portal-logo">♙</div><strong>iNextLabs</strong><i/><b>Management Portal</b></div>
+    <div className="portal-brand"><div className="portal-logo">♙</div><strong>iNextLabs</strong><i /><b>Management Portal</b></div>
     <div className="portal-user"><span>ⓘ</span><span>♧</span><span>⚙</span><div className="user-avatar">MS</div><div><strong>Admin</strong><small>Admin</small></div></div>
   </header>;
 }
@@ -398,10 +398,10 @@ function Sidebar() {
       <nav>
         <div className="nav-item"><span>▦</span>Dashboard</div>
         <div className="nav-section">PLATFORM <span>⌄</span></div>
-        {[["♧","Client Account"],["♧","Client Teams"],["▤","AI Resource Catalog"],["▣","Infra Resources"]].map(([icon,label]) => <div className="nav-item" key={label}><span>{icon}</span>{label}</div>)}
+        {[["♧", "Client Account"], ["♧", "Client Teams"], ["▤", "AI Resource Catalog"], ["▣", "Infra Resources"]].map(([icon, label]) => <div className="nav-item" key={label}><span>{icon}</span>{label}</div>)}
         <button className="nav-item nav-parent" onClick={() => setExpanded(!expanded)}><span>♙</span>AI Services <b>{expanded ? "⌄" : "›"}</b></button>
         {expanded && <div className="nav-children">
-          {[["♧","MCP Servers"],["♙","Agents"],["⚙","Agent Skills"],["ϟ","Model Registry"],["▤","Docs AI"],["⌁","Insights AI"]].map(([icon,label]) => <div className={`nav-item ${label === "Agents" ? "active" : ""}`} key={label}><span>{icon}</span>{label}</div>)}
+          {[["♧", "MCP Servers"], ["♙", "Agents"], ["⚙", "Agent Skills"], ["ϟ", "Model Registry"], ["▤", "Docs AI"], ["⌁", "Insights AI"]].map(([icon, label]) => <div className={`nav-item ${label === "Agents" ? "active" : ""}`} key={label}><span>{icon}</span>{label}</div>)}
         </div>}
         <div className="nav-item"><span>⌁</span>Activity Logs</div>
       </nav>
@@ -582,15 +582,15 @@ function ConfigurePanel({
   return (
     <div className="agent-builder-view wizard-layout">
       <div className="wizard-page-heading">
-<button
-  type="button"
-  className="config-back-button"
-  onClick={onClose}
-  aria-label="Back to agents"
-  title="Back to agents"
->
-  <ArrowLeft size={18} strokeWidth={2} />
-</button>        <div><h2>{draft.status === "draft" ? "Register AI Agent" : "Configure AI Agent"}</h2><p>Configure agent details and capabilities. Step {currentStepIndex + 1} of {configurationSteps.length}.</p></div>
+        <button
+          type="button"
+          className="config-back-button"
+          onClick={onClose}
+          aria-label="Back to agents"
+          title="Back to agents"
+        >
+          <ArrowLeft size={18} strokeWidth={2} />
+        </button>        <div><h2>{draft.status === "draft" ? "Register AI Agent" : "Configure AI Agent"}</h2><p>Configure agent details and capabilities. Step {currentStepIndex + 1} of {configurationSteps.length}.</p></div>
       </div>
       <div className="configure-panel">
         <div className="config-body">
@@ -621,63 +621,81 @@ function ConfigurePanel({
           </aside>
 
           <div className="wizard-content-column">
-          <section className="config-content">
-            {section === "overview" && (
-              <Overview
-                agent={draft}
-                onChange={setDraft}
-                onEditType={() => setTypeDialog(true)}
-                onEditScope={() => setScopeDialog(true)}
-              />
-            )}
+            <section className="config-content">
+              {section === "overview" && (
+                <Overview
+                  agent={draft}
+                  onChange={setDraft}
+                  onEditType={() => setTypeDialog(true)}
+                  onEditScope={() => setScopeDialog(true)}
+                />
+              )}
 
-            {section === "agents" && draft.type === "MULTI" && (
-              <AgentsSection
-                allAgents={allAgents}
-                currentAgentId={draft.agentId}
-                selectedIds={selectedIds}
-                selectedAgentObjects={selectedAgentObjects}
-                onToggle={toggleAgent}
-              />
-            )}
+              {section === "agents" && draft.type === "MULTI" && (
+                <AgentsSection
+                  allAgents={allAgents}
+                  currentAgentId={draft.agentId}
+                  selectedIds={selectedIds}
+                  selectedAgentObjects={selectedAgentObjects}
+                  onToggle={toggleAgent}
+                />
+              )}
 
-            {section === "execution" && draft.type === "MULTI" && (
-              <ExecutionSection
-                value={draft.executionStrategy ?? "SEQUENTIAL"}
-                onChange={(value) =>
-                  setDraft({ ...draft, executionStrategy: value })
-                }
-              />
-            )}
+              {section === "execution" && draft.type === "MULTI" && (
+                <ExecutionSection
+                  value={draft.executionStrategy ?? "SEQUENTIAL"}
+                  onChange={(value) =>
+                    setDraft({ ...draft, executionStrategy: value })
+                  }
+                />
+              )}
 
-            {section === "model" && <ModelSection agent={draft} onChange={setDraft} />}
-            {section === "prompt" && <div className="content-card"><div className="section-heading"><div><h2>System Prompt</h2><p>Instructions followed by this agent.</p></div></div><textarea className="catalog-textarea" rows={10} value={draft.systemPrompt} onChange={e => setDraft({ ...draft, systemPrompt: e.target.value })} placeholder="Enter system instructions..." /></div>}
-            {section === "tools" && <CatalogMultiSelect title="Available Tools" description="Choose the tools this agent can use." items={availableTools} selected={draft.tools.filter(t => t.enabled).map(t => t.toolId)} onToggle={id => setDraft({ ...draft, tools: toggleIds(draft.tools.filter(t => t.enabled).map(t => t.toolId), id).map(toolId => ({ toolId, enabled: true })) })} />}
-            {section === "mcp" && <McpSection agent={draft} onChange={setDraft} />}
-            {section === "skills" && <CatalogMultiSelect title="Available Skills" description="Assign one or more skills to this agent." items={availableSkills} selected={draft.skills.filter(s => s.enabled).map(s => s.skillId)} onToggle={id => setDraft({ ...draft, skills: toggleIds(draft.skills.filter(s => s.enabled).map(s => s.skillId), id).map(skillId => ({ skillId, enabled: true })) })} />}
-            {section === "knowledge" && <Placeholder title="Knowledge Base" text={`${draft.knowledgebase.filter(k => k.enabled).length} knowledge base(s)`} />}
-            {section === "scope" && <Placeholder title="Scope & Settings" text={`Scope: ${capitalize(draft.scope.type)}\nStatus: ${capitalize(draft.status)}`} />}
-          </section>
+              {section === "model" && <ModelSection agent={draft} onChange={setDraft} />}
+              {section === "prompt" && <div className="content-card"><div className="section-heading"><div><h2>System Prompt</h2><p>Instructions followed by this agent.</p></div></div><textarea className="catalog-textarea" rows={10} value={draft.systemPrompt} onChange={e => setDraft({ ...draft, systemPrompt: e.target.value })} placeholder="Enter system instructions..." /></div>}
+              {section === "tools" && <CatalogMultiSelect title="Available Tools" description="Choose the tools this agent can use." items={availableTools} selected={draft.tools.filter(t => t.enabled).map(t => t.toolId)} onToggle={id => setDraft({ ...draft, tools: toggleIds(draft.tools.filter(t => t.enabled).map(t => t.toolId), id).map(toolId => ({ toolId, enabled: true })) })} />}
+              {section === "mcp" && <McpSection agent={draft} onChange={setDraft} />}
+              {section === "skills" && <CatalogMultiSelect title="Available Skills" description="Assign one or more skills to this agent." items={availableSkills} selected={draft.skills.filter(s => s.enabled).map(s => s.skillId)} onToggle={id => setDraft({ ...draft, skills: toggleIds(draft.skills.filter(s => s.enabled).map(s => s.skillId), id).map(skillId => ({ skillId, enabled: true })) })} />}
+              {section === "knowledge" && (
+                <div className="knowledge-coming-soon">
+                  <div className="knowledge-coming-soon-icon">
+                    <BookOpen size={28} strokeWidth={1.7} />
+                  </div>
 
-        <div className="config-footer">
-          <button type="button" className="wizard-previous-button" disabled={currentStepIndex === 0} onClick={() => setSection(configurationSteps[currentStepIndex - 1].id)}>← Previous</button>
-          <span>Step {currentStepIndex + 1} of {configurationSteps.length}</span>
-          {isFinalStep ? (
-            <button
-              type="button"
-              className="primary-button"
-              disabled={!canSubmit}
-              title={!canSubmit ? "Complete Overview, Model, System Prompt and any required multi-agent steps" : undefined}
-              onClick={submitAgent}
-            >
-              {draft.status === "draft" ? "Create Agent" : "Save Changes"}
-            </button>
-          ) : (
-            <button type="button" className="primary-button" onClick={saveAndContinue}>
-              Save &amp; Continue →
-            </button>
-          )}
-        </div>
+                  <h2>Knowledge Base</h2>
+
+                  <span className="knowledge-coming-soon-badge">
+                    Coming Soon
+                  </span>
+
+                  <p>
+                    Knowledge Base integration is planned for a future update.
+                    Configuration options will be available once the requirements
+                    are finalized.
+                  </p>
+                </div>
+              )}
+              {section === "scope" && <Placeholder title="Scope & Settings" text={`Scope: ${capitalize(draft.scope.type)}\nStatus: ${capitalize(draft.status)}`} />}
+            </section>
+
+            <div className="config-footer">
+              <button type="button" className="wizard-previous-button" disabled={currentStepIndex === 0} onClick={() => setSection(configurationSteps[currentStepIndex - 1].id)}>← Previous</button>
+              <span>Step {currentStepIndex + 1} of {configurationSteps.length}</span>
+              {isFinalStep ? (
+                <button
+                  type="button"
+                  className="primary-button"
+                  disabled={!canSubmit}
+                  title={!canSubmit ? "Complete Overview, Model, System Prompt and any required multi-agent steps" : undefined}
+                  onClick={submitAgent}
+                >
+                  {draft.status === "draft" ? "Create Agent" : "Save Changes"}
+                </button>
+              ) : (
+                <button type="button" className="primary-button" onClick={saveAndContinue}>
+                  Save &amp; Continue →
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
@@ -1032,16 +1050,16 @@ function McpSection({ agent, onChange }: { agent: Agent; onChange: (agent: Agent
     <div className="section-heading"><div><h2>MCP Servers & Tools</h2><p>Browse available servers, then select permitted tools for each server.</p></div><span className="count-badge">{agent.mcp.reduce((sum, server) => sum + (server.allowedTools?.length ?? 0), 0)} tools</span></div>
     <input className="catalog-search" value={query} onChange={e => setQuery(e.target.value)} placeholder="Search MCP servers..." />
     <div className="mcp-servers-scroll available-items-scroll" role="region" aria-label="Available MCP servers" tabIndex={0}>
-    {availableMcpServers.filter(s => s.name.toLowerCase().includes(query.toLowerCase())).map(server => {
-      const selected = agent.mcp.find(entry => entry.mcpId === server.id)?.allowedTools ?? [];
-      const open = expanded.includes(server.id);
-      return <div className="mcp-server" key={server.id}>
-        <button type="button" className="mcp-server-header" onClick={() => setExpanded(toggleIds(expanded, server.id))} aria-expanded={open}>
-          <span><strong>{server.name}</strong><small>{server.description}</small></span><span>{selected.length}/{server.tools.length} tools {open ? "⌃" : "⌄"}</span>
-        </button>
-        {open && <div className="mcp-tools">{server.tools.map(tool => <label key={tool} className="catalog-option"><input type="checkbox" checked={selected.includes(tool)} onChange={() => toggleTool(server.id, tool)} /><span><strong>{tool}</strong></span></label>)}</div>}
-      </div>;
-    })}
+      {availableMcpServers.filter(s => s.name.toLowerCase().includes(query.toLowerCase())).map(server => {
+        const selected = agent.mcp.find(entry => entry.mcpId === server.id)?.allowedTools ?? [];
+        const open = expanded.includes(server.id);
+        return <div className="mcp-server" key={server.id}>
+          <button type="button" className="mcp-server-header" onClick={() => setExpanded(toggleIds(expanded, server.id))} aria-expanded={open}>
+            <span><strong>{server.name}</strong><small>{server.description}</small></span><span>{selected.length}/{server.tools.length} tools {open ? "⌃" : "⌄"}</span>
+          </button>
+          {open && <div className="mcp-tools">{server.tools.map(tool => <label key={tool} className="catalog-option"><input type="checkbox" checked={selected.includes(tool)} onChange={() => toggleTool(server.id, tool)} /><span><strong>{tool}</strong></span></label>)}</div>}
+        </div>;
+      })}
     </div>
   </div>;
 }

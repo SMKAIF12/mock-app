@@ -1,0 +1,40 @@
+/* Additive table-only overrides. Keep AgentDashboard.light.css unchanged. */
+.portal-theme .table-head,
+.portal-theme .table-row {
+  display: grid !important;
+  grid-template-columns:
+    minmax(145px, 1.2fr)
+    minmax(170px, 1.5fr)
+    minmax(80px, .7fr)
+    minmax(95px, .8fr)
+    minmax(90px, .8fr)
+    minmax(150px, 1.15fr)
+    minmax(150px, 1.15fr)
+    minmax(90px, .65fr) !important;
+  column-gap: 12px;
+  align-items: center;
+  min-width: 1100px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.portal-theme .agent-id-cell,
+.portal-theme .agent-cell strong {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.portal-theme .agent-cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+.portal-theme .agent-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+.portal-theme .table-row:hover { background-color: #fff8f6; }
