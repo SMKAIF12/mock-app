@@ -193,7 +193,7 @@ export default function AgentDashboard() {
   );
 
   const createAgent = (name: string, description: string) => {
-    const now = new Date().getDate().toString();
+    const now = new Date().toISOString();
     const newAgent: Agent = {
       agentId: crypto.randomUUID(),
       name,
