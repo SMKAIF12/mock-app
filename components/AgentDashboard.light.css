@@ -924,3 +924,57 @@
 .portal-theme .available-items-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
+
+/* =========================================
+   Theme-based Hover Effects
+   ========================================= */
+
+.portal-theme {
+  --agent-accent: #f05742;
+  --agent-hover-bg: #fff5f2;
+  --agent-hover-border: #f5a79b;
+}
+
+/* Tools, Skills, MCP and selection cards */
+.portal-theme .agent-option,
+.portal-theme .available-items-scroll > .agent-option,
+.portal-theme .type-card,
+.portal-theme .strategy {
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.portal-theme .agent-option:hover,
+.portal-theme .type-card:hover,
+.portal-theme .strategy:hover {
+  background-color: var(--agent-hover-bg);
+  border-color: var(--agent-hover-border);
+  box-shadow: 0 2px 8px rgba(240, 87, 66, 0.06);
+}
+
+/* MCP server cards */
+.portal-theme .mcp-server-card:hover {
+  background-color: var(--agent-hover-bg);
+  border-color: var(--agent-hover-border);
+}
+
+/* Agent table rows */
+.portal-theme .table-row:hover {
+  background-color: #fff8f6;
+}
+
+/* Configuration stepper */
+.portal-theme .config-nav button:not(.selected):hover {
+  background-color: var(--agent-hover-bg);
+  color: var(--agent-accent);
+}
+
+/* Preserve selected item appearance */
+.portal-theme .agent-option.selected,
+.portal-theme .type-card.selected,
+.portal-theme .strategy.selected {
+  border-color: var(--agent-accent);
+  background-color: #fff0ec;
+}
