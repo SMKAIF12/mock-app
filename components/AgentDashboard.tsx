@@ -133,32 +133,24 @@ const navItems = [
   ["⚙", "Settings"]
 ];
 
-const strategyInfo: {
-  value: ExecutionStrategy;
-  title: string;
-  description: string;
-  recommended?: boolean;
-}[] = [
-    {
-      value: "SEQUENTIAL",
-      title: "Sequential",
-      description:
-        "Agents run in order. Each agent's output can be passed to the next agent.",
-      recommended: true
-    },
-    {
-      value: "PARALLEL",
-      title: "Parallel",
-      description:
-        "All selected agents run simultaneously and their outputs are combined."
-    },
-    {
-      value: "ROUTER",
-      title: "Router",
-      description:
-        "A routing agent decides which agent should be invoked based on the task."
-    }
-  ];
+const createDefaultExecutionStrategy = (): ExecutionStrategy => ({
+  pattern: "HANDOFF",
+  orchestratorAgentId: "",
+  handoff: { allowedRoutes: [], maxHops: 8, maxIterations: 20 }
+});
+
+function validateExecutionStrategy(strategy: ExecutionStrategy | undefined, ids: string[]): boolean {
+  if (!strategy || strategy.pattern !== "HANDOFF" || !ids.includes(strategy.orchestratorAgentId)) return false;
+  const { allowedRoutes, maxHops, maxIterations } = strategy.handoff;
+  if (!Number.isInteger(maxHops) || maxHops < 1 || !Number.isInteger(maxIterations) || maxIterations < 1 || !allowedRoutes.length) return false;
+  const sources = new Set<string>();
+  for (const route of allowedRoutes) {
+    if (!ids.includes(route.fromAgentId) || sources.has(route.fromAgentId) || !route.toAgentIds.length) return false;
+    sources.add(route.fromAgentId);
+    if (new Set(route.toAgentIds).size !== route.toAgentIds.length || route.toAgentIds.some(id => id === route.fromAgentId || !ids.includes(id))) return false;
+  }
+  return true;
+}
 
 export default function AgentDashboard() {
   const [agents, setAgents] = useState<Agent[]>(initialAgents);
@@ -496,7 +488,7 @@ function ConfigurePanel({
     { id: "overview", label: "Overview", description: "Agent details and scope", complete: Boolean(draft.name?.trim() && draft.description?.trim() && draft.type && draft.scope?.type) },
     ...(draft.type === "MULTI" ? [
       { id: "agents", label: "Agents", description: "Participating agents", complete: (draft.agents?.length ?? 0) >= 2 },
-      { id: "execution", label: "Execution Strategy", description: "Orchestration method", complete: Boolean(draft.executionStrategy) }
+      { id: "execution", label: "Execution Strategy", description: "Orchestration method", complete: validateExecutionStrategy(draft.executionStrategy, draft.agents?.map(a => a.agentId) ?? []) }
     ] : []),
     { id: "model", label: "Model", description: "Model and deployment", complete: Boolean(draft.model?.provider && draft.model?.deploymentKey) },
     { id: "prompt", label: "System Prompt", description: "Agent instructions", complete: Boolean(draft.systemPrompt?.trim()) },
@@ -529,7 +521,7 @@ function ConfigurePanel({
         ...draft,
         type,
         agents: [],
-        executionStrategy: "SEQUENTIAL"
+        executionStrategy: createDefaultExecutionStrategy()
       });
     } else {
       setDraft({
@@ -543,26 +535,25 @@ function ConfigurePanel({
   };
 
   const toggleAgent = (agentId: string) => {
-    const current = selectedIds;
-
-    if (current.includes(agentId)) {
-      const remaining = current.filter((id) => id !== agentId);
-      setDraft({
-        ...draft,
-        agents: remaining.map((id, index) => ({
-          agentId: id,
-          order: index + 1
-        }))
-      });
-    } else {
-      setDraft({
-        ...draft,
-        agents: [
-          ...(draft.agents ?? []),
-          { agentId, order: (draft.agents?.length ?? 0) + 1 }
-        ]
-      });
-    }
+    const nextIds = selectedIds.includes(agentId)
+      ? selectedIds.filter(id => id !== agentId)
+      : [...selectedIds, agentId];
+    setDraft(current => ({
+      ...current,
+      agents: nextIds.map((id, index) => ({ agentId: id, order: index + 1 })),
+      executionStrategy: current.executionStrategy ? {
+        ...current.executionStrategy,
+        orchestratorAgentId: nextIds.includes(current.executionStrategy.orchestratorAgentId)
+          ? current.executionStrategy.orchestratorAgentId : "",
+        handoff: {
+          ...current.executionStrategy.handoff,
+          allowedRoutes: current.executionStrategy.handoff.allowedRoutes
+            .filter(route => nextIds.includes(route.fromAgentId))
+            .map(route => ({ ...route, toAgentIds: route.toAgentIds.filter(id => nextIds.includes(id)) }))
+            .filter(route => route.toAgentIds.length > 0)
+        }
+      } : undefined
+    }));
   };
 
   const saveAndContinue = () => {
@@ -628,7 +619,7 @@ function ConfigurePanel({
           </aside>
 
           <div className="wizard-content-column">
-            <section className="config-content">
+            <section className={`config-content ${section === "execution" ? "config-content--execution" : ""}`}>
               {section === "overview" && (
                 <Overview
                   agent={draft}
@@ -650,10 +641,9 @@ function ConfigurePanel({
 
               {section === "execution" && draft.type === "MULTI" && (
                 <ExecutionSection
-                  value={draft.executionStrategy ?? "SEQUENTIAL"}
-                  onChange={(value) =>
-                    setDraft({ ...draft, executionStrategy: value })
-                  }
+                  value={draft.executionStrategy ?? createDefaultExecutionStrategy()}
+                  agents={selectedAgentObjects}
+                  onChange={(value) => setDraft(current => ({ ...current, executionStrategy: value }))}
                 />
               )}
 
@@ -958,57 +948,53 @@ function AgentsSection({
 }
 
 function ExecutionSection({
-  value,
-  onChange
+  value, agents, onChange
 }: {
   value: ExecutionStrategy;
+  agents: Agent[];
   onChange: (value: ExecutionStrategy) => void;
 }) {
+  const routes = value.handoff.allowedRoutes;
+  const updateHandoff = (patch: Partial<ExecutionStrategy["handoff"]>) =>
+    onChange({ ...value, handoff: { ...value.handoff, ...patch } });
+  const updateRoute = (index: number, route: ExecutionStrategy["handoff"]["allowedRoutes"][number]) =>
+    updateHandoff({ allowedRoutes: routes.map((current, i) => i === index ? route : current) });
+  const names = (id: string) => agents.find(a => a.agentId === id)?.name ?? id;
+  const errors: string[] = [];
+  if (agents.length < 2) errors.push("Select at least two agents in the Agents step.");
+  if (!agents.some(a => a.agentId === value.orchestratorAgentId)) errors.push("Select an orchestrator from the participating agents.");
+  if (!routes.length) errors.push("Add at least one allowed handoff route.");
+  if (routes.some(r => !r.fromAgentId || !r.toAgentIds.length)) errors.push("Every route needs a source and at least one destination.");
+  if (new Set(routes.map(r => r.fromAgentId).filter(Boolean)).size !== routes.filter(r => r.fromAgentId).length) errors.push("Each source agent can have only one route; select multiple destinations within it.");
+  if (!Number.isInteger(value.handoff.maxHops) || value.handoff.maxHops < 1 || !Number.isInteger(value.handoff.maxIterations) || value.handoff.maxIterations < 1) errors.push("Execution limits must be positive whole numbers.");
   return (
-    <div className="content-card">
-      <div className="section-heading">
-        <div>
-          <h2>Execution Strategy</h2>
-          <p>Define how the selected agents should work together.</p>
-        </div>
+    <div className="content-card handoff-builder">
+      <div className="section-heading"><div><h2>Execution Strategy</h2><p>Configure permitted transfers between participating agents.</p></div></div>
+      <div className="handoff-grid">
+        <label className="handoff-field"><span>Execution Pattern</span><select value={value.pattern} onChange={() => {}}><option value="HANDOFF">Handoff</option></select><small>Agents can transfer control along allowed routes.</small></label>
+        <label className="handoff-field"><span>Orchestrator Agent</span><select value={value.orchestratorAgentId} onChange={e => onChange({ ...value, orchestratorAgentId: e.target.value })}><option value="">Select orchestrator</option>{agents.map(agent => <option key={agent.agentId} value={agent.agentId}>{agent.name}</option>)}</select><small>Agent responsible for coordinating the workflow.</small></label>
       </div>
-
-      <div className="strategy-list">
-        {strategyInfo.map((strategy) => {
-          const selected = value === strategy.value;
-
-          return (
-            <button
-              key={strategy.value}
-              className={`strategy ${selected ? "chosen" : ""}`}
-              onClick={() => onChange(strategy.value)}
-            >
-              <span className={`radio ${selected ? "checked" : ""}`} />
-              <span>
-                <strong>{strategy.title}</strong>
-                {strategy.recommended && (
-                  <em>Recommended</em>
-                )}
-                <small>{strategy.description}</small>
-              </span>
-            </button>
-          );
-        })}
+      <div className="handoff-section-title"><div><h3>Allowed Handoff Routes</h3><p>Choose which agents may hand off to other agents.</p></div><button type="button" className="secondary-button" disabled={agents.length < 2 || routes.length >= agents.length} onClick={() => updateHandoff({ allowedRoutes: [...routes, { fromAgentId: "", toAgentIds: [] }] })}>＋ Add Route</button></div>
+      <div className="handoff-routes">
+        {routes.map((route, index) => (
+          <div className="handoff-route" key={index}>
+            <div className="handoff-route-heading"><strong>Route {index + 1}</strong><button type="button" className="handoff-remove" onClick={() => updateHandoff({ allowedRoutes: routes.filter((_, i) => i !== index) })}>Remove</button></div>
+            <label className="handoff-field"><span>From Agent</span><select value={route.fromAgentId} onChange={e => updateRoute(index, { fromAgentId: e.target.value, toAgentIds: route.toAgentIds.filter(id => id !== e.target.value) })}><option value="">Select source agent</option>{agents.filter(a => a.agentId === route.fromAgentId || !routes.some((r, i) => i !== index && r.fromAgentId === a.agentId)).map(a => <option key={a.agentId} value={a.agentId}>{a.name}</option>)}</select></label>
+            <div className="handoff-field"><span>To Agents</span><div className="handoff-destinations">{agents.filter(a => a.agentId !== route.fromAgentId).map(a => <label key={a.agentId} className="handoff-destination"><input type="checkbox" checked={route.toAgentIds.includes(a.agentId)} onChange={e => updateRoute(index, { ...route, toAgentIds: e.target.checked ? [...route.toAgentIds, a.agentId] : route.toAgentIds.filter(id => id !== a.agentId) })}/>{a.name}</label>)}</div></div>
+          </div>
+        ))}
+        {!routes.length && <div className="handoff-empty">No handoff routes yet. Add a route to configure allowed transfers.</div>}
       </div>
-
-      {value === "SEQUENTIAL" && (
-        <div className="info-box">
-          <b>Execution order</b>
-          <p>
-            The order is determined by the order in which agents are
-            selected. You can later replace this with drag-and-drop ordering.
-          </p>
-        </div>
-      )}
+      <div className="handoff-section-title"><div><h3>Execution Limits</h3><p>Protect the workflow from excessive transfers and loops.</p></div></div>
+      <div className="handoff-grid">
+        <label className="handoff-field"><span>Maximum Hops</span><input type="number" min="1" step="1" value={value.handoff.maxHops} onChange={e => updateHandoff({ maxHops: e.target.value === "" ? 0 : Number(e.target.value) })}/><small>Maximum agent-to-agent transfers.</small></label>
+        <label className="handoff-field"><span>Maximum Iterations</span><input type="number" min="1" step="1" value={value.handoff.maxIterations} onChange={e => updateHandoff({ maxIterations: e.target.value === "" ? 0 : Number(e.target.value) })}/><small>Maximum execution cycles.</small></label>
+      </div>
+      {errors.length > 0 && <div className="handoff-validation" role="status">{errors.map(error => <p key={error}>{error}</p>)}</div>}
+      {routes.length > 0 && <div className="handoff-preview"><strong>Route Summary</strong>{routes.filter(r => r.fromAgentId).map((route, index) => <p key={index}>{names(route.fromAgentId)} → {route.toAgentIds.map(names).join(", ") || "No destinations"}</p>)}</div>}
     </div>
   );
 }
-
 
 function toggleIds(current: string[], id: string) {
   return current.includes(id) ? current.filter(item => item !== id) : [...current, id];

@@ -2,10 +2,22 @@ export type AgentType = "SINGLE" | "MULTI";
 
 export type AgentStatus = "active" | "inactive" | "draft";
 
-export type ExecutionStrategy =
-  | "SEQUENTIAL"
-  | "PARALLEL"
-  | "ROUTER";
+export type ExecutionPattern = "HANDOFF";
+
+export interface HandoffRoute {
+  fromAgentId: string;
+  toAgentIds: string[];
+}
+
+export interface ExecutionStrategy {
+  pattern: ExecutionPattern;
+  orchestratorAgentId: string;
+  handoff: {
+    allowedRoutes: HandoffRoute[];
+    maxHops: number;
+    maxIterations: number;
+  };
+}
 
 export interface Personality {
   formalityLevel?: string;

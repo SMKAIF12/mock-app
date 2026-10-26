@@ -1160,3 +1160,78 @@
 @media (max-width: 700px) {
   .app-shell.portal-theme .personality-grid { grid-template-columns: 1fr; }
 }
+
+
+/* Handoff execution strategy builder — additive styles; existing rules retained. */
+.app-shell.portal-theme .handoff-builder { display:flex; flex-direction:column; gap:18px; }
+.app-shell.portal-theme .handoff-builder .section-heading { margin-bottom:0; }
+.app-shell.portal-theme .handoff-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; }
+.app-shell.portal-theme .handoff-field { display:flex; flex-direction:column; gap:8px; min-width:0; color:#34445f; font-weight:600; font-size:12px; }
+.app-shell.portal-theme .handoff-field select,.app-shell.portal-theme .handoff-field input[type="number"] { width:100%; min-height:43px; padding:10px 13px; border:1px solid #dce2eb; border-radius:9px; background-color:#fff; color:#14243d; }
+.app-shell.portal-theme .handoff-field small { color:#8190a5; font-weight:400; line-height:1.5; }
+.app-shell.portal-theme .handoff-section-title { display:flex; align-items:center; justify-content:space-between; gap:12px; border-top:1px solid #e6eaf0; padding-top:18px; }
+.app-shell.portal-theme .handoff-section-title h3 { margin:0 0 5px; font-size:14px; color:#14243d; }
+.app-shell.portal-theme .handoff-section-title p { margin:0; color:#8190a5; font-size:12px; }
+.app-shell.portal-theme .handoff-section-title button { white-space:nowrap; }
+.app-shell.portal-theme .handoff-routes { display:grid; gap:12px; }
+.app-shell.portal-theme .handoff-route { padding:16px; border:1px solid #dfe5ed; border-radius:10px; background:#fbfcfe; display:grid; gap:14px; }
+.app-shell.portal-theme .handoff-route-heading { display:flex; align-items:center; justify-content:space-between; color:#14243d; }
+.app-shell.portal-theme .handoff-remove { border:0; background:transparent; color:#d33b42; font-weight:600; }
+.app-shell.portal-theme .handoff-destinations { display:flex; flex-wrap:wrap; gap:9px; }
+.app-shell.portal-theme .handoff-destination { display:inline-flex; align-items:center; gap:8px; padding:9px 12px; border:1px solid #e0e5ed; border-radius:8px; background:white; color:#34445f; cursor:pointer; font-weight:500; }
+.app-shell.portal-theme .handoff-destination input { accent-color:#f05742; width:15px; height:15px; }
+.app-shell.portal-theme .handoff-empty { padding:22px; border:1px dashed #dce2eb; border-radius:9px; color:#8190a5; text-align:center; }
+.app-shell.portal-theme .handoff-validation { border:1px solid #f6d7ad; border-radius:8px; padding:10px 14px; background:#fffaf2; }
+.app-shell.portal-theme .handoff-validation p { margin:4px 0; color:#9b651a; font-size:12px; }
+.app-shell.portal-theme .handoff-preview { padding:14px; background:#f6f8fb; border:1px solid #e0e6ee; border-radius:9px; }
+.app-shell.portal-theme .handoff-preview strong { color:#14243d; }
+.app-shell.portal-theme .handoff-preview p { margin:8px 0 0; color:#53627a; }
+@media(max-width:700px) { .app-shell.portal-theme .handoff-grid { grid-template-columns:1fr; } .app-shell.portal-theme .handoff-section-title { flex-wrap:wrap; } }
+
+/* Execution Strategy — allow content to scroll above footer */
+
+.app-shell.portal-theme .wizard-layout .wizard-content-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.app-shell.portal-theme .wizard-layout .wizard-content-column:has(
+  .handoff-config
+) .config-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain;
+  padding-bottom: 28px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+.app-shell.portal-theme .wizard-layout .wizard-content-column:has(
+  .handoff-config
+) .config-footer {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+}
+
+
+/* Execution Strategy: scroll the form without scrolling the wizard footer.
+   Appended only; existing CSS is preserved. */
+.app-shell.portal-theme .wizard-layout .wizard-content-column > .config-content.config-content--execution {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  padding-bottom: 28px;
+}
+.app-shell.portal-theme .wizard-layout .wizard-content-column > .config-content.config-content--execution::-webkit-scrollbar { width: 7px; }
+.app-shell.portal-theme .wizard-layout .wizard-content-column > .config-content.config-content--execution::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+.app-shell.portal-theme .wizard-layout .wizard-content-column > .config-content.config-content--execution::-webkit-scrollbar-track { background: transparent; }
